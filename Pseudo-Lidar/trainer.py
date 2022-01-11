@@ -29,6 +29,7 @@ from Load_patchNet import load_patchNet
 from transdssl.transdssl_encoder import TRANSDSSLEncoder
 from transdssl.transdssl_decoder import TRANSDSSLDecoder
 from patchnetvlad.models.models_generic import get_backend, get_model, get_pca_encoding
+
 def set_random_seed(seed):
     if seed >= 0:
         print("Set random seed@@@@@@@@@@@@@@@@@@@@")
@@ -95,7 +96,7 @@ class Trainer:
             self.models["encoder"].num_ch_enc = [ 64, 18, 36, 72, 144 ]
             self.models["depth"] = networks.HRDepthDecoder(self.models["encoder"].num_ch_enc, scales=self.opt.scales,opt=self.opt)
             
-            if self.opt.distill:
+            if self.opt.self_guided:
                 self.models["encoder_t"] = networks.test_hr_encoder.hrnet18(True)
                 self.models["encoder_t"].num_ch_enc = [ 64, 18, 36, 72, 144 ]
                 self.models["depth_t"] = networks.HRDepthDecoder(self.models["encoder"].num_ch_enc, scales=self.opt.scales,opt=self.opt)
@@ -108,7 +109,7 @@ class Trainer:
                 self.opt.num_layers, self.opt.weights_init == "pretrained")
             self.models["depth"] = networks.DepthDecoder(
                 self.models["encoder"].num_ch_enc, self.opt.scales)
-            if self.opt.distill:
+            if self.opt.self_guided:
                 self.models["encoder_t"] = networks.ResnetEncoder(
                     self.opt.num_layers, self.opt.weights_init == "pretrained")
                 self.models["depth_t"] = networks.DepthDecoder(
@@ -117,14 +118,14 @@ class Trainer:
         elif self.opt.model=="GBNet":
             self.models["encoder"] =networks.test_hr_encoder.hrnet18(True)
             self.models["depth"] = networks.GBNet(self.opt)
-            if self.opt.distill:
+            if self.opt.self_guided:
                 self.models["encoder_t"] = networks.test_hr_encoder.hrnet18(True)
                 self.models["encoder_t"].num_ch_enc = [ 64, 18, 36, 72, 144 ]
                 self.models["depth_t"] =  networks.GBNet(self.opt)
         elif self.opt.model=="GBNet_v2":
             self.models["encoder"] =networks.GBNetEncoder(self.opt)
             self.models["depth"] = networks.GBNet_v2(self.opt)
-            if self.opt.distill:
+            if self.opt.self_guided:
                 self.models["encoder_t"] = networks.GBNetEncoder(self.opt)
                 self.models["encoder_t"].num_ch_enc = [ 64, 18, 36, 72, 144 ]
                 self.models["depth_t"] = self.models["depth"] # networks.GBNet(self.opt)
@@ -135,13 +136,13 @@ class Trainer:
             
         self.models["encoder"].to(self.device)
         self.parameters_to_train += list(self.models["encoder"].parameters())
-        if self.opt.distill:
+        if self.opt.self_guided:
             self.models["encoder_t"].to(self.device)
             self.parameters_to_train += list(self.models["encoder_t"].parameters())
         
         self.models["depth"].to(self.device)
         self.parameters_to_train += list(self.models["depth"].parameters())
-        if self.opt.distill:
+        if self.opt.self_guided:
             self.models["depth_t"].to(self.device)
             self.parameters_to_train += list(self.models["depth_t"].parameters())
             
@@ -255,9 +256,7 @@ class Trainer:
         """Run the entire training pipeline
         """
         self.init_time = time.time()
-#         if isinstance(self.opt.load_weights_folder,str):
-#             self.epoch_start = int(self.opt.load_weights_folder[-1]) + 1
-#         else:
+
         self.epoch_start = 0
         self.step = 0
         self.start_time = time.time()
@@ -268,7 +267,7 @@ class Trainer:
             if (self.epoch + 1) % self.opt.save_frequency == 0:#number of epochs between each save defualt =1
                 self.save_model()
                 if self.opt.dataset=="kaist":
-                    if self.opt.distill:
+                    if self.opt.self_guided:
                         model_encoder=self.models["encoder_t"]
                         model_decoder=self.models["depth_t"]
                     else:
@@ -352,7 +351,7 @@ class Trainer:
             if early_phase or late_phase:
                 self.log_time(batch_idx, duration, losses["loss"].cpu().data)
                 if not self.opt.debug:
-                    if self.opt.distill:
+                    if self.opt.self_guided:
                         self.log("train", inputs, outputs, losses,outputs_t)
                     else:
                         self.log("train", inputs, outputs, losses,outputs)
@@ -383,7 +382,7 @@ class Trainer:
             outputs = self.models["depth"](features[0])
         else:
             # Otherwise, we only feed the image with frame_id 0 through the depth encoder
-            if self.opt.distill:
+            if self.opt.self_guided:
                 self.features_color = self.models["encoder"](inputs["color_aug", 0, 0])
                 self.features_thermal = self.models["encoder_t"](inputs["thermal", 0, 0])
                 # import pdb;pdb.set_trace()
@@ -399,7 +398,7 @@ class Trainer:
 
         self.generate_images_pred(inputs, outputs_c)
         
-        if self.opt.distill:
+        if self.opt.self_guided:
             losses = self.compute_losses(inputs, outputs_c,outputs_t)
             return outputs_c, losses,outputs_t
         else:
@@ -719,7 +718,7 @@ class Trainer:
             
             loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)#defualt=1e-3 something with get_smooth_loss function
 
-            if self.opt.distill and self.opt.compute:
+            if self.opt.self_guided and self.opt.compute:
 #                 try:
                     disp=F.interpolate(disp, [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)            
                     disp_t=F.interpolate( disp_t, [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
@@ -881,7 +880,7 @@ class Trainer:
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
             model_dict.update(pretrained_dict)
             self.models[n].load_state_dict(model_dict)
-            if self.opt.distill:
+            if self.opt.self_guided:
                 n_t=n+"_t"
                 print("Loading {} weights...".format(n_t))
                 path = os.path.join(self.opt.load_weights_folder, "{}.pth".format(n))

@@ -219,8 +219,8 @@ class MonodepthOptions:
         self.parser.add_argument("--thermal",
                                  help="thermal",
                                  action="store_true")
-        self.parser.add_argument("--distill",
-                                 help="distill",
+        self.parser.add_argument("--self_guided",
+                                 help="self_guided",
                                  action="store_true")
         self.parser.add_argument("--compute",
                                  help="distill",

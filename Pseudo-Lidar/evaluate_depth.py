@@ -282,7 +282,7 @@ def evaluate_with_train(encoder,depth_decoder,num_workers,data_path,eval_split,h
     with torch.no_grad():
         for data in tqdm(dataloader):
             
-            if opt.thermal or opt.distill:
+            if opt.thermal or opt.self_guided:
                 input_color = data[("thermal", 0, 0)].cuda()
             else:    
                 input_color = data[("color", 0, 0)].cuda()
