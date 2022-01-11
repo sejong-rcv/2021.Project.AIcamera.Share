@@ -40,18 +40,11 @@ data
 
 ## Train && Test 
 
-### Model (OCR)
--  시맨틱 정보 추출 기술의 베이스라인으로 선정된 OCR  모델은 클래스 물체 영역의 픽셀을 추가적인 정보로 고려하는 방법론이며, 이는 물체의 문맥 정보를 강화해서 보다 정확하게 물체를 표현하려는 장점을 가짐
+### Model (MS-UDA)
+-  시맨틱 정보 추출 기술의 베이스라인으로 선정된 모델은 칼라 영상을 입력으로 하는 시맨틱 정보 추정 모델의 정확성을 열화상 영상 기반의 모델에 전이 시켜주기 위한 Multi-Spectral Domain Adaptation 개념과 낮과 밤에 온도 차이로 인해 서로 다른 정보를 포함하는 열화상 카메라의 문제를 해결하기 위한 Day-to-Night Thermal Image Translation 개념을 도입해서 낮과 밤에 상관없이 고정확도의 시맨틱 정보를 추정함.  
 
-- 사전 모델 Download
-  - OCR 모델을 Cityscape로 사전 학습 시킨 파라미터를 다운받아야 좀 더 수렴이 빨리 이뤄진다.***(필수)***
-  ```
-  mkdir checkpoints
-  wget https://download.openmmlab.com/mmsegmentation/v0.5/ocrnet/ocrnet_hr48_512x1024_160k_cityscapes/ocrnet_hr48_512x1024_160k_cityscapes_20200602_191037-dfbf1b0c.pth -P checkpoints
-  ```
 ### 학습 및 평가 방식 
 - 학습과 평가는 코드 하나로 한번에 진행된다.
-- 아래 명령어로 실행 시킬 경우 총 10000 iter 돌고 test 해서 성능을 내게 된다. 
    ```
    python train.py
    ``` 
