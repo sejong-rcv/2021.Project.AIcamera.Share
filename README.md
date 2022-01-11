@@ -9,5 +9,5 @@
   - 실험 방법
   - 정성적 성능
 ## Semantic-Segmantation documantation
-- 물체의 문맥 정보를 활용한 시맨틱 정보 추출 모델 [실험결과서](https://github.com/sejong-rcv/2021.Project.AIcamera.Share/tree/main/Semantic-Segmantation)
+- 칼라카메라 정보를 활용한 시맨틱 정보 추출 모델  [실험결과서](https://github.com/sejong-rcv/2021.Project.AIcamera.Share/tree/main/Semantic-Segmantation)
   
