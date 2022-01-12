@@ -1,6 +1,9 @@
 # Pseudo-RGB
 - 주야간 관계없이 사용 가능한 Pseudo-RGB 기술 개발을 위해 시작된 연구로, Colorization 모델을 이용해 열화상 영상을 컬러 영상으로 변환하고자 한다.
 - 기존 Colorization의 경우 영상 전체를 입력으로 하여 영상을 colorization하고자 하였으나, 이는 다수의 물체가 나오거나 물체와 배경이 뚜렷하지 않을 경우, 물체에 대한 색상이 선명치 못하고 배경색에 덮혀버리는 문제가 발생한다. 이를 해결하고자 영상 내 각 물체에 대해서 Colorization하는 방법론이 제안되었으며, 해당 방법론을 이번 연구에 베이스로 설정하였다. Instance aware Image Colorization은 총 3개의 네트워크로 구성되어 있으며, 각각 전체 영상, 물체 영역 영상, 전체와 물체 영역을 fusion한 영상을 입력으로 한다. 실험 결과는 아래에서 확인 가능하다.
+
+debuging : $\alpha$, $\frac{1}{3}$, $Thermal_{RGB}$
+
 ## Dataloader
 
 데이터는 아래 구조와 같이 구성되어야만 한다.
@@ -100,7 +103,7 @@ Sejong Multispectral Dataset은 실내물류창고 내 무인지게차의 장애
 
 - 이는 디코더가 생성된 결과를 점진적으로 보간(Interpolation)함으로써 영상의 선명도는 향상되었지만, 그 과정에서 영상의 구조적 성분들을 온전히 표현하지 못하고 손상된 것으로 판단된다.
 ### 정성적 결과
-![그림1.png](/readme_image/translation_results.jpg) 다중 해상도 특징 맵 기반 RGB 추정 모델의 정성적 평가 결과. 1행과 2행은 각각 KAIST 멀티스펙트럴 데이터 셋의 Campus와 Urban에 대한 정성적 결과 예시이며, (a) Thermal (b) ($Y_{Thermal}+CbCr_{Thermal}$) (c) ($RGB_{Thermal} w/o Decoder$) (d) ($RGB_{Thermal} w/ decoder$) (e) Real RGB에 해당함.
+![그림1.png](readme_image/translation_results.jpg) 다중 해상도 특징 맵 기반 RGB 추정 모델의 정성적 평가 결과. 1행과 2행은 각각 KAIST 멀티스펙트럴 데이터 셋의 Campus와 Urban에 대한 정성적 결과 예시이며, (a) Thermal (b) ($Y_{Thermal}+CbCr_{Thermal}$) (c) ($RGB_{Thermal} w/o Decoder$) (d) ($RGB_{Thermal} w/ decoder$) (e) Real RGB에 해당함.
 
 - 그림1-(b)에서 볼 수 있듯이 칼라 정보만을 추정한 1차년도 결과는 열화상 밝기에 ($Y_{Thermal}$)에 영향을 받아 색상을 뚜렷하게 표현 못 하지만, 명도 정보를 함께 예측한 그림1-(c),(d)는 비교적 RGB 영상과 유사하게 칼라 정보가 생성되는 것으로 보인다.
 
