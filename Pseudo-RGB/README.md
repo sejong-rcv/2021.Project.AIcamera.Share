@@ -1,9 +1,8 @@
 # Pseudo-RGB
-- 주야간 관계없이 사용 가능한 Pseudo-RGB 기술 개발을 위해 시작된 연구로, Colorization 모델을 이용해 열화상 영상을 컬러 영상으로 변환하고자 한다.
-- 기존 Colorization의 경우 영상 전체를 입력으로 하여 영상을 colorization하고자 하였으나, 이는 다수의 물체가 나오거나 물체와 배경이 뚜렷하지 않을 경우, 물체에 대한 색상이 선명치 못하고 배경색에 덮혀버리는 문제가 발생한다. 이를 해결하고자 영상 내 각 물체에 대해서 Colorization하는 방법론이 제안되었으며, 해당 방법론을 이번 연구에 베이스로 설정하였다. Instance aware Image Colorization은 총 3개의 네트워크로 구성되어 있으며, 각각 전체 영상, 물체 영역 영상, 전체와 물체 영역을 fusion한 영상을 입력으로 한다. 실험 결과는 아래에서 확인 가능하다.
+- 주야간 관계없이 사용 가능한 Pseudo-RGB 기술 개발을 위해 시작된 연구로, Image Translation 기술을 활용하여 열화상 영상을 컬러 영상으로 변환하고자 한다.
+- Pseudo-RGB 연구에 사용된 칼라 모델은 특징 맵의 해상도를 점진적으로 압축해나가는 기존의 영상 변환 모델들과 달리 모든 해상도에 대하여 병렬적으로 학습하여 정보를 공유하는 [High-Resolution Transformer](https://arxiv.org/abs/2110.09408) 모델은 압축으로 인해 구조적 정보들이 손실되는 것을 최소화하여 생성된 칼라 영상의 물체 경계 등을 뚜렷하게 추정한다.
 
-debuging : $${\alpha}$$, $$\frac{1}{3}$$, $$Thermal<u>RGB</u>$$ $$T~RGB~$$
-
+![그림1](readme_image/HRFormer.png) 그림1. High-Resolution Transformer 모델의 전체 파이프라인. 모든 스케일 레벨에 대해 병렬적으로 Feature를 학습 및 사용하기 때문에 구조 및 세밀한 정보들의 손상을 예방할 수 있음.
 ## Dataloader
 
 데이터는 아래 구조와 같이 구성되어야만 한다.
@@ -103,7 +102,7 @@ Sejong Multispectral Dataset은 실내물류창고 내 무인지게차의 장애
 
 - 이는 디코더가 생성된 결과를 점진적으로 보간(Interpolation)함으로써 영상의 선명도는 향상되었지만, 그 과정에서 영상의 구조적 성분들을 온전히 표현하지 못하고 손상된 것으로 판단된다.
 ### 정성적 결과
-![그림1.png](readme_image/translation_results.jpg) 다중 해상도 특징 맵 기반 RGB 추정 모델의 정성적 평가 결과. 1행과 2행은 각각 KAIST 멀티스펙트럴 데이터 셋의 Campus와 Urban에 대한 정성적 결과 예시이며, (a) Thermal (b) ($Y_{Thermal}+CbCr_{Thermal}$) (c) ($RGB_{Thermal} w/o Decoder$) (d) ($RGB_{Thermal} w/ decoder$) (e) Real RGB에 해당함.
+![그림2](readme_image/translation_results.jpg) 그림2. 다중 해상도 특징 맵 기반 RGB 추정 모델의 정성적 평가 결과. 1행과 2행은 각각 KAIST 멀티스펙트럴 데이터 셋의 Campus와 Urban에 대한 정성적 결과 예시이며, (a) Thermal (b) ($Y_{Thermal}+CbCr_{Thermal}$) (c) ($RGB_{Thermal} w/o Decoder$) (d) ($RGB_{Thermal} w/ decoder$) (e) Real RGB에 해당함.
 
 - 그림1-(b)에서 볼 수 있듯이 칼라 정보만을 추정한 1차년도 결과는 열화상 밝기에 ($Y_{Thermal}$)에 영향을 받아 색상을 뚜렷하게 표현 못 하지만, 명도 정보를 함께 예측한 그림1-(c),(d)는 비교적 RGB 영상과 유사하게 칼라 정보가 생성되는 것으로 보인다.
 
@@ -121,7 +120,7 @@ Sejong Multispectral Dataset은 실내물류창고 내 무인지게차의 장애
 - 위의 정량적 결과에 의하면 명도 정보와 칼라 정보를 동시에 추정한 ($RGB_{Thermal}$)의 성능이 일부 정보만을 가지고 있는 ($Y_{Thermal}+CbCr_{Thermal}$)과 (Grey)보다 큰 성능 향상을 보였으며, 이는 두 가지 정보의 조합이 물체 검출 성능에 큰 영향력을 가짐을 시사함.
 
 ### 정성적 결과
-![그림2.png](readme_image/detection_results.jpg) 다양한 입력 영상에 따른 보행자 검출의 정성적 결과. RGB 영상으로 학습한 검출 모델에 각각 (a) Thermal (b) Grey (c) ($Y_{Thermal}+CbCr_{Thermal}$) (d) ($RGB_{Thermal}$ w/ decoder) (e) Real RGB를 입력으로 사용하여 평가함.
+![그림3](readme_image/detection_results.jpg) 그림3. 다양한 입력 영상에 따른 보행자 검출의 정성적 결과. RGB 영상으로 학습한 검출 모델에 각각 (a) Thermal (b) Grey (c) ($Y_{Thermal}+CbCr_{Thermal}$) (d) ($RGB_{Thermal}$ w/ decoder) (e) Real RGB를 입력으로 사용하여 평가함.
 
 - 그림 2의 정성적 결과를 보았을 때 칼라 정보는 복잡한 환경에서도 사람과 주변 물체를 구분해주는 중요한 정보로 작용하고 있으며, 추가로 명도 정보가 포함되는 경우 보다 세밀한 검출 박스를 추출함을 보여준다.
 
